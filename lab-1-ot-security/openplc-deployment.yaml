@@ -1,0 +1,39 @@
+# lab-1-ot-security/openplc-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openplc-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openplc
+  template:
+    metadata:
+      labels:
+        app: openplc
+    spec:
+      containers:
+      - name: openplc
+        image: openplc:v1 # Menggunakan image yang kita build
+        ports:
+        - containerPort: 8080
+        - containerPort: 502
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openplc-service
+spec:
+  type: NodePort # Mengekspos service ke luar cluster
+  selector:
+    app: openplc
+  ports:
+  - name: web
+    port: 8080
+    targetPort: 8080
+    nodePort: 30080
+  - name: modbus
+    port: 502
+    targetPort: 502
+    nodePort: 30502
