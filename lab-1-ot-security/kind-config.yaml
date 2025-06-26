@@ -1,12 +1,17 @@
-# lab-1-ot-security/kind-config.yaml
+# kind-config.yaml 
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   extraPortMappings:
-  - containerPort: 30080 # Port Web UI OpenPLC
+  # Port OpenPLC
+  - containerPort: 30080 
     hostPort: 30080
-    protocol: TCP
-  - containerPort: 30502 # Port Modbus OpenPLC
+  - containerPort: 30502
     hostPort: 30502
-    protocol: TCP
+  # Port ScadaBR
+  - containerPort: 30090
+    hostPort: 30090
+  # Port Wazuh Dashboard 
+  - containerPort: 30443 # Kita ekspos port internal 5601 ke 30443
+    hostPort: 30443

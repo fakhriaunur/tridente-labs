@@ -1,0 +1,40 @@
+# zeek-deployment.yaml
+# Blueprint untuk mendirikan "Mata-Mata Jaringan" (Zeek).
+# Versi ini menggunakan image resmi dari zeek/zeek.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: zeek-network-sensor
+  labels:
+    app: zeek
+spec:
+  selector:
+    matchLabels:
+      app: zeek
+  template:
+    metadata:
+      labels:
+        app: zeek
+    spec:
+      # Kita jalankan Zeek di setiap node untuk menangkap semua traffic
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: zeek
+        # Menggunakan image resmi dan tag LTS (Long-Term Support)
+        image: zeek/zeek:lts
+        # Perintah untuk menjalankan Zeek dan memonitor interface 'eth0'
+        # Log akan disimpan di /usr/local/zeek/logs
+        command: ["/usr/local/zeek/bin/zeek", "-i", "eth0", "/usr/local/zeek/share/zeek/site/local.zeek"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: zeek-logs
+          mountPath: /usr/local/zeek/logs
+      volumes:
+      - name: zeek-logs
+        # Log disimpan di host, yang nantinya bisa di-mount oleh pod lain
+        # (seperti Filebeat agent untuk Wazuh)
+        hostPath:
+          path: /var/log/tridente-zeek-logs
+          type: DirectoryOrCreate

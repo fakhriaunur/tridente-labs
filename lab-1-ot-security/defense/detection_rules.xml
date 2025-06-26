@@ -1,0 +1,64 @@
+<!-- 
+  Tridente Labs - Aturan Deteksi Wazuh
+  Pilar: Defense (CySA+)
+  Tujuan: Mendeteksi aktivitas penulisan (write) Modbus yang tidak sah atau anomali
+  ke sistem PLC.
+-->
+
+<group name="ot_security,modbus,">
+
+  <!-- 
+    ATURAN DASAR (LEVEL 5): MENANDAI SEMUA PERINTAH WRITE
+    ID: 100100
+    Tujuan: Aturan ini adalah pemicu dasar. Aturan ini akan aktif setiap kali ada
+            log yang terdeteksi sebagai perintah 'WriteSingleCoil' ke protokol Modbus.
+            Levelnya rendah (5) karena ini bisa jadi aktivitas normal.
+  -->
+  <rule id="100100" level="5">
+    <field name="proto">modbus</field>
+    <field name="function">WriteSingleCoil</field>
+    <description>Operasi Tulis Modbus Terdeteksi: Sebuah perintah tulis dikirim ke PLC.</description>
+    <group>ot_security,modbus_event,</group>
+  </rule>
+
+  <!-- 
+    LAPIS 1: ATURAN OTORISASI (LEVEL 12 - KRITIS)
+    ID: 100101
+    Tujuan: Memicu alarm KRITIS jika perintah tulis datang dari IP yang TIDAK ADA
+            di dalam daftar putih 'allowed-ot-ips'. Ini adalah pertahanan utama kita.
+  -->
+  <rule id="100101" level="12">
+    <if_sid>100100</if_sid>
+    <list field="src_ip" lookup="not_address_match_key">etc/lists/allowed-ot-ips</list>
+    <description>PERINGATAN KRITIS OT: Perintah Tulis Modbus dari IP Tidak Dikenal ($(src_ip))!</description>
+    <group>ot_security,attack,unauthorized_access,</group>
+  </rule>
+
+  <!-- 
+    LAPIS 2: ATURAN ANOMALI VOLUMETRIK (LEVEL 10 - SERANGAN OTOMATIS)
+    ID: 100102
+    Tujuan: Mendeteksi serangan otomatis atau 'brute-force' dengan memantau
+            jumlah perintah tulis dalam waktu singkat.
+  -->
+  <rule id="100102" level="10">
+    <if_sid>100100</if_sid>
+    <frequency>20</frequency>
+    <timeframe>60</timeframe>
+    <description>SERANGAN OTOMATIS TERDETEKSI: Terlalu banyak (20+) perintah tulis Modbus dari $(src_ip) dalam 60 detik.</description>
+    <group>ot_security,attack,bruteforce,</group>
+  </rule>
+
+  <!-- 
+    LAPIS 3: ATURAN ANOMALI WAKTU (LEVEL 8 - AKTIVITAS JAM MALAM)
+    ID: 100103
+    Tujuan: Menandai aktivitas yang terjadi di luar jam kerja normal, yang bisa
+            menjadi indikasi awal kompromi.
+  -->
+  <rule id="100103" level="8">
+    <if_sid>100100</if_sid>
+    <time>19:00 - 07:00</time> <!-- Di luar jam kerja (7 malam - 7 pagi) -->
+    <description>Aktivitas Mencurigakan di Luar Jam Kerja: Perintah tulis Modbus terdeteksi dari $(src_ip) pada malam hari.</description>
+    <group>ot_security,policy_violation,off_hours,</group>
+  </rule>
+
+</group>

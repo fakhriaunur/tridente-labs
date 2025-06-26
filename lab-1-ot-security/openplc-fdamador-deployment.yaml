@@ -1,4 +1,4 @@
-# lab-1-ot-security/openplc-deployment.yaml
+# lab-1-ot-security/openplc-fdamador-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: openplc
-        image: localhost/openplc:v1 # Menggunakan image yang kita build
+        image: fdamador/openplc # Menggunakan image yang kita build
         ports:
         - containerPort: 8080
         - containerPort: 502

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wazuh-dashboard-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-dashboard
+  template:
+    metadata:
+      labels:
+        app: wazuh-dashboard
+    spec:
+      containers:
+      - name: wazuh-dashboard
+        image: wazuh/wazuh-dashboard:4.8.0
+        ports:
+        - containerPort: 5601
+        env:
+        - name: WAZUH_INDEXER_URL
+          value: "https://wazuh-indexer-service:9200" # Ini butuh pod indexer, tapi kita sederhanakan dulu
